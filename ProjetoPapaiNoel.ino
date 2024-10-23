@@ -11,57 +11,11 @@
 // Variáveis globais e objetos
 String localIP_Address = "192.168.0.1";  // Endereço IP local
 BlynkTimer timer;  // Timer do Blynk
-int previousMillis = 0;  // Tempo anterior para verificar o intervalo
+unsigned long previousMillis = 0;  // Tempo anterior para verificar o intervalo
 int interval = 10000;  // Intervalo de verificação (10 segundos)
 bool apModeEnabled = false;  // Flag para saber se o modo AP foi ativado
-
-//Função para verificar a conexão wifi e entrar no modo AP
-void checkWiFiAndEnterAP() {
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Conexão Wi-Fi perdida. Tentando reconectar...");
-
-    // Desconectar e tentar reconectar
-    WiFi.disconnect();
-    WiFi.begin();  // Tenta reconectar com as credenciais já salvas
-
-    long startAttemptTime = millis();
-    bool reconnectSuccess = false;
-
-    // Tentar reconectar por até 10 segundos
-    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
-      delay(500);
-      Serial.print(".");
-      if (WiFi.status() == WL_CONNECTED) {
-        reconnectSuccess = true;
-        break;
-      }
-    }
-
-    if (reconnectSuccess) {
-      Serial.println("Reconectado com sucesso ao Wi-Fi.");
-    } else {
-      Serial.println("Falha na reconexão. Entrando no modo AP...");
-
-      // Reinicia o modo AP para nova configuração
-      BlynkState::set(MODE_WAIT_CONFIG);  // Entra no modo AP de configuração
-
-      // Fica no modo AP até que o usuário configure a nova rede
-      while (BlynkState::get() != MODE_RUNNING) {
-        BlynkEdgent.run();  // Executa a configuração do Blynk
-        delay(100);
-      }
-
-      // Após a configuração, tenta reconectar novamente
-      if (WiFi.status() == WL_CONNECTED) {
-        Serial.println("Reconexão após o modo AP bem-sucedida.");
-      } else {
-        Serial.println("Ainda não conectado após o modo AP.");
-      }
-    }
-  } else {
-    Serial.println("Conexão Wi-Fi estável.");
-  }
-}
+const int pinoAutom = 23;
+bool modoAutomatico;
 
 void myTimerEvent() {
   // Envia dados ao Blynk
@@ -69,7 +23,7 @@ void myTimerEvent() {
 }
 bool ledState = HIGH;  
 
-// Função chamada quando o botão virtual no Blynk (V1) é pressionado
+// Função chamada quando o botão virtual no Blynk (V0) é pressionado
 BLYNK_WRITE(V0) {
   ledState = param.asInt();  // Obtém o estado do botão (0 ou 1)
 
@@ -83,6 +37,26 @@ BLYNK_WRITE(V0) {
     Serial.println("LED desligado");
   }
 }
+ void controle()
+{
+  Serial.print("Função controle....");
+}
+
+BLYNK_WRITE(V7) {
+  ledState = param.asInt();  // Obtém o estado do botão (0 ou 1)
+
+  // Atualiza o estado do LED
+  digitalWrite(LED_PIN, ledState);
+  
+  // Exibe o estado atual do LED no monitor serial
+  if (ledState == 1 || digitalRead(pinoAutom) == HIGH) {
+    modoAutomatico = true;
+    controle();
+  } else {
+    modoAutomatico = false;
+  }
+}
+  
 
 void setup() {
   Serial.begin(115200);
@@ -105,14 +79,7 @@ void loop() {
     previousMillis = currentMillis;
     checkWiFiAndEnterAP();  // Se a conexão Wi-Fi for perdida, entra no modo AP
   }
-
-  // Alterna o estado do LED para indicar o status da conexão Wi-Fi
-  if (WiFi.status() == WL_CONNECTED) {
-    digitalWrite(LED_PIN, HIGH);  // LED aceso se estiver conectado
-  } else {
-    digitalWrite(LED_PIN, LOW);  // LED apagado se não estiver conectado
-  }
-
+  
   // Atualiza o endereço IP e envia valores para o Blynk
   localIP_Address = WiFi.localIP().toString();
   long count = millis() % 9999;
@@ -121,6 +88,5 @@ void loop() {
   // Exibe o endereço IP do ESP32
   Serial.print("Endereço IP do ESP32: ");
   Serial.println(WiFi.localIP());
-  delay(1000); 
+  delay(3000); 
 }
-//testando versinamento com git
