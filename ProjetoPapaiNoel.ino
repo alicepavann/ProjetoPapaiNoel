@@ -15,7 +15,24 @@ unsigned long previousMillis = 0;  // Tempo anterior para verificar o intervalo
 int interval = 10000;  // Intervalo de verificação (10 segundos)
 bool apModeEnabled = false;  // Flag para saber se o modo AP foi ativado
 const int pinoAutom = 23;
-bool modoAutomatico;
+
+ // Variáveis fictícias para simulação
+  bool autom = false;
+  bool acionaA = false;
+  bool acionaB = false;
+  bool limiteA = false;
+  bool limiteB = false;
+  long tempoManobra = 5000;  // 5 segundos de tempo de manobra
+  bool alarmeA = false;
+  bool alarmeB = false;
+  bool reset = false;
+  int numeroDeX = 3;  // Realizar 3 ciclos automáticos
+  bool recomecar = false;
+  bool concluido = false;
+
+
+
+
 
 void myTimerEvent() {
   // Envia dados ao Blynk
@@ -37,10 +54,6 @@ BLYNK_WRITE(V0) {
     Serial.println("LED desligado");
   }
 }
- void controle()
-{
-  Serial.print("Função controle....");
-}
 
 BLYNK_WRITE(V7) {
   ledState = param.asInt();  // Obtém o estado do botão (0 ou 1)
@@ -50,10 +63,13 @@ BLYNK_WRITE(V7) {
   
   // Exibe o estado atual do LED no monitor serial
   if (ledState == 1 || digitalRead(pinoAutom) == HIGH) {
-    modoAutomatico = true;
-    controle();
+    Serial.println("entrou no if");
+    autom = true;
+    recomecar = true;
+      // Chama a função controle
+    controle(autom, acionaA, acionaB, limiteA, limiteB, tempoManobra, alarmeA, alarmeB, reset, numeroDeX, recomecar, concluido);
   } else {
-    modoAutomatico = false;
+    autom = false;
   }
 }
   
@@ -61,7 +77,7 @@ BLYNK_WRITE(V7) {
 void setup() {
   Serial.begin(115200);
   delay(100);
-
+  pinMode(pinoAutom, INPUT);
   pinMode(LED_PIN, OUTPUT);  // Define o pino do LED como saída
   digitalWrite(LED_PIN, ledState);
   BlynkEdgent.begin();  // Inicia o Blynk e a configuração Wi-Fi
@@ -85,8 +101,4 @@ void loop() {
   long count = millis() % 9999;
   Blynk.virtualWrite(V2, count);
 
-  // Exibe o endereço IP do ESP32
-  Serial.print("Endereço IP do ESP32: ");
-  Serial.println(WiFi.localIP());
-  delay(3000); 
 }
