@@ -14,7 +14,7 @@ PARAMETROS DE SAIDA
 P8 = ALARMA = FALHA NO ACIONAMENTO LADO A
 P9 = ALARMB = FALHA NO ACIONAMENTO LADO B
 P10 = COMPLETED = CICLO CONCLUIDO
-P11 = OUT A = ACIONA MOTOR LADO A
+P11 = OUT A = ACIONA MOTOR LADO A 
 P12 = OUT B = ACIONA MOTOR LADO B
 */
 
@@ -30,12 +30,11 @@ void control(bool autoMode, bool limitA, bool limitB,
     bool firstTime = true;            // Primeira vez após reinício
     bool motorOn = false;             // Status do motor
 
-    Serial.println("CHAMOU A FUNCAO CONTROLE");
 
     // Modo Automático
     if (autoMode) {
         if (!cycleStarted) {
-            if (!limitA) {
+            if (!limitA && currentCycle < numberOfCycles) {
                 direction = -1;
                 cycleStarted = true;
                 firstTime = true;
@@ -70,8 +69,6 @@ void control(bool autoMode, bool limitA, bool limitB,
 
     // Modo Manual
     else {
-        Serial.println("modo manual");
-
         // Verifica direção baseada no eixo X
         if (joystickX > 230 && !limitA) {
             direction = 1;
